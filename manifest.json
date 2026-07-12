@@ -1,0 +1,17 @@
+{
+  "name": "Snake Arena",
+  "short_name": "Snake",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#00ff00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://placehold.co/512x512/png?text=Snake",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
