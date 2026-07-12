@@ -31,7 +31,7 @@
         <div id="leaderboardMenu" class="pause-overlay">
             <div class="pause-title">🏆 GLOBAL TOP 5</div>
             <div class="leaderboard-list" id="leaderboard-list">
-                <div class="leaderboard-itemLoading">Loading global scores...</div>
+                <div class="leaderboard-itemLoading">Connecting to live scores...</div>
             </div>
             <button class="menu-btn exit" id="close-leaderboard-btn">Back</button>
         </div>
@@ -64,54 +64,102 @@
         let gameInterval;
         let isPaused = false;
 
-        // --- NICKNAME & HIGH SCORE PERSISTENCE ---
+        // --- NICKNAME & HIGH SCORE LOCAL STORAGE ---
         let playerBest = parseInt(localStorage.getItem('snake_personal_best')) || 0;
         document.getElementById("high-score").innerText = "Best: " + playerBest;
 
         let playerNickname = localStorage.getItem('snake_nickname');
         if (!playerNickname) {
-            playerNickname = prompt("Enter a nickname for the web leaderboards:", "Player_" + Math.floor(Math.random()*1000));
+            playerNickname = prompt("Enter a nickname for the web leaderboards:", "Player_" + Math.floor(Math.random()*900 + 100));
             if (!playerNickname || playerNickname.trim() === "") playerNickname = "Anonymous";
             localStorage.setItem('snake_nickname', playerNickname.trim());
         }
 
-        // --- MOCK GLOBAL LEADERBOARD DATA ---
-        // Once you link Firebase/Supabase, you will fetch real database data here instead!
-        let mockGlobalScores = [
-            { name: "ProGamer", score: 240 },
-            { name: "SnakeMaster", score: 180 },
-            { name: playerNickname, score: playerBest }, // Shows current player's stats dynamically
-            { name: "Alpha", score: 50 },
-            { name: "Rex", score: 20 }
-        ];
+        // --- LIVE REAL-TIME DATABASE CONFIG ---
+        // Generates a unique user ID so scores updates don't clash
+        let playerUid = localStorage.getItem('snake_uid');
+        if (!playerUid) {
+            playerUid = 'user_' + Math.random().toString(36).substring(2, 11);
+            localStorage.setItem('snake_uid', playerUid);
+        }
 
-        function displayGlobalLeaderboard() {
-            leaderboardList.innerHTML = "";
-            // Sort high to low
-            mockGlobalScores.sort((a, b) => b.score - a.score);
-            
-            mockGlobalScores.slice(0, 5).forEach((entry, index) => {
-                const item = document.createElement("div");
-                item.className = "leaderboard-item";
-                if (entry.name === playerNickname) item.classList.add("current-player");
-                item.innerHTML = `<span>${index + 1}. ${entry.name}</span><span>${entry.score}</span>`;
-                leaderboardList.appendChild(item);
-            });
+        // Free public testing bucket bucket on KVDB.io
+        const DB_URL = "https://kvdb.io/2dCPg2d21j3ZgT4xWbSgPq/snake_scores";
+
+        // Fetch real database records from the internet
+        async function fetchGlobalScores() {
+            try {
+                leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">Loading live ranks...</div>';
+                const response = await fetch(DB_URL);
+                if (!response.ok) throw new Error("Database empty");
+                const allData = await response.json();
+                
+                // allData is expected to be an object: { "user_abc": {name: "XYZ", score: 100} }
+                let scoreArray = Object.values(allData);
+                
+                // Sort absolute highest scores first
+                scoreArray.sort((a, b) => b.score - a.score);
+
+                leaderboardList.innerHTML = "";
+                if (scoreArray.length === 0) {
+                    leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">No scores recorded yet!</div>';
+                    return;
+                }
+
+                scoreArray.slice(0, 5).forEach((entry, index) => {
+                    const item = document.createElement("div");
+                    item.className = "leaderboard-item";
+                    if (entry.name === playerNickname) item.classList.add("current-player");
+                    item.innerHTML = `<span>${index + 1}. ${entry.name}</span><span>${entry.score}</span>`;
+                    leaderboardList.appendChild(item);
+                });
+            } catch (err) {
+                // If bucket is blank or down, safely display our current status
+                leaderboardList.innerHTML = `
+                    <div class="leaderboard-item current-player"><span>1. ${playerNickname}</span><span>${playerBest}</span></div>
+                    <div class="leaderboard-itemLoading" style="font-size:11px;">(Database empty or initialization required)</div>
+                `;
+            }
+        }
+
+        // Save high score to the live network
+        async function saveScoreToDatabase(newScore) {
+            try {
+                // 1. Fetch current status
+                let currentDbState = {};
+                try {
+                    const res = await fetch(DB_URL);
+                    if (res.ok) currentDbState = await res.json();
+                } catch(e){}
+
+                // 2. Set or overwrite only this player's data entry slot
+                currentDbState[playerUid] = {
+                    name: playerNickname,
+                    score: newScore
+                };
+
+                // 3. Save full bundle back up to the web server
+                await fetch(DB_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(currentDbState),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } catch (e) {
+                console.log("Network sync deferred:", e);
+            }
         }
 
         function handleGameEnd() {
             alert("Game Over! Score: " + score);
             
-            // Check and update Personal High Score
             if (score > playerBest) {
                 playerBest = score;
                 localStorage.setItem('snake_personal_best', playerBest);
                 document.getElementById("high-score").innerText = "Best: " + playerBest;
                 alert("🎉 New Personal Record!");
                 
-                // Update local version of global list for preview
-                let myEntry = mockGlobalScores.find(e => e.name === playerNickname);
-                if (myEntry) myEntry.score = playerBest;
+                // Stream live to web database
+                saveScoreToDatabase(playerBest);
             }
             resetGame();
         }
@@ -132,19 +180,19 @@
         }
 
         function clearCanvas() {
-            ctx.fillStyle = "#000000";
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--surface-color').trim() || "#000000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         function drawSnake() {
-            ctx.fillStyle = "#00ff00"; 
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent-color').trim() || "#00ff00"; 
             for(let i = 0; i < snake.length; i++) {
                 ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 1, gridSize - 1);
             }
         }
 
         function drawFood() {
-            ctx.fillStyle = "#ff0000"; 
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--danger-color').trim() || "#ff0000"; 
             ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 1, gridSize - 1);
         }
 
@@ -252,7 +300,7 @@
         document.getElementById("view-leaderboard-btn").addEventListener("click", () => {
             pauseMenu.style.display = "none";
             leaderboardMenu.style.display = "flex";
-            displayGlobalLeaderboard();
+            fetchGlobalScores();
         });
 
         document.getElementById("close-leaderboard-btn").addEventListener("click", () => {
