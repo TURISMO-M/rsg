@@ -121,7 +121,7 @@ body {
 canvas {
     width: 100%;
     height: 100%;
-    background-color: #000000;
+    background-color: transparent;
     display: block;
 }
 
@@ -202,4 +202,3 @@ canvas {
     .canvas-container { width: 400px; height: 400px; }
     .game-header { width: 400px; }
 }
-
