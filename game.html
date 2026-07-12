@@ -6,6 +6,9 @@
     <title>Snake Arena</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -31,7 +34,7 @@
         <div id="leaderboardMenu" class="pause-overlay">
             <div class="pause-title">🏆 GLOBAL TOP 5</div>
             <div class="leaderboard-list" id="leaderboard-list">
-                <div class="leaderboard-itemLoading">Connecting to live scores...</div>
+                <div class="leaderboard-itemLoading">Connecting...</div>
             </div>
             <button class="menu-btn exit" id="close-leaderboard-btn">Back</button>
         </div>
@@ -64,101 +67,58 @@
         let gameInterval;
         let isPaused = false;
 
-        // --- NICKNAME & HIGH SCORE LOCAL STORAGE ---
         let playerBest = parseInt(localStorage.getItem('snake_personal_best')) || 0;
         document.getElementById("high-score").innerText = "Best: " + playerBest;
 
-        let playerNickname = localStorage.getItem('snake_nickname');
-        if (!playerNickname) {
-            playerNickname = prompt("Enter a nickname for the web leaderboards:", "Player_" + Math.floor(Math.random()*900 + 100));
-            if (!playerNickname || playerNickname.trim() === "") playerNickname = "Anonymous";
-            localStorage.setItem('snake_nickname', playerNickname.trim());
-        }
+        // 🚨 REPLACE THIS WITH YOUR CONFIG COPIED IN STEP 3 🚨
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
 
-        // --- LIVE REAL-TIME DATABASE CONFIG ---
-        // Generates a unique user ID so scores updates don't clash
-        let playerUid = localStorage.getItem('snake_uid');
-        if (!playerUid) {
-            playerUid = 'user_' + Math.random().toString(36).substring(2, 11);
-            localStorage.setItem('snake_uid', playerUid);
-        }
-
-        // Free public testing bucket bucket on KVDB.io
-        const DB_URL = "https://kvdb.io/2dCPg2d21j3ZgT4xWbSgPq/snake_scores";
-
-        // Fetch real database records from the internet
-        async function fetchGlobalScores() {
-            try {
-                leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">Loading live ranks...</div>';
-                const response = await fetch(DB_URL);
-                if (!response.ok) throw new Error("Database empty");
-                const allData = await response.json();
-                
-                // allData is expected to be an object: { "user_abc": {name: "XYZ", score: 100} }
-                let scoreArray = Object.values(allData);
-                
-                // Sort absolute highest scores first
-                scoreArray.sort((a, b) => b.score - a.score);
-
+        function fetchGlobalScores() {
+            leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">Loading...</div>';
+            database.ref('scores').orderByChild('score').limitToLast(5).once('value', snapshot => {
                 leaderboardList.innerHTML = "";
-                if (scoreArray.length === 0) {
-                    leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">No scores recorded yet!</div>';
-                    return;
-                }
+                let players = [];
+                snapshot.forEach(child => { players.push({uid: child.key, ...child.val()}); });
+                players.reverse();
 
-                scoreArray.slice(0, 5).forEach((entry, index) => {
+                players.forEach((player, idx) => {
                     const item = document.createElement("div");
                     item.className = "leaderboard-item";
-                    if (entry.name === playerNickname) item.classList.add("current-player");
-                    item.innerHTML = `<span>${index + 1}. ${entry.name}</span><span>${entry.score}</span>`;
+                    if (auth.currentUser && player.uid === auth.currentUser.uid) item.classList.add("current-player");
+                    item.innerHTML = `<span>${idx + 1}. ${player.name}</span><span>${player.score}</span>`;
                     leaderboardList.appendChild(item);
                 });
-            } catch (err) {
-                // If bucket is blank or down, safely display our current status
-                leaderboardList.innerHTML = `
-                    <div class="leaderboard-item current-player"><span>1. ${playerNickname}</span><span>${playerBest}</span></div>
-                    <div class="leaderboard-itemLoading" style="font-size:11px;">(Database empty or initialization required)</div>
-                `;
-            }
+            });
         }
 
-        // Save high score to the live network
-        async function saveScoreToDatabase(newScore) {
-            try {
-                // 1. Fetch current status
-                let currentDbState = {};
-                try {
-                    const res = await fetch(DB_URL);
-                    if (res.ok) currentDbState = await res.json();
-                } catch(e){}
-
-                // 2. Set or overwrite only this player's data entry slot
-                currentDbState[playerUid] = {
-                    name: playerNickname,
+        function saveScoreToDatabase(newScore) {
+            const user = auth.currentUser;
+            if (user) {
+                database.ref('scores/' + user.uid).set({
+                    name: user.displayName,
                     score: newScore
-                };
-
-                // 3. Save full bundle back up to the web server
-                await fetch(DB_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(currentDbState),
-                    headers: { 'Content-Type': 'application/json' }
                 });
-            } catch (e) {
-                console.log("Network sync deferred:", e);
             }
         }
 
         function handleGameEnd() {
             alert("Game Over! Score: " + score);
-            
             if (score > playerBest) {
                 playerBest = score;
                 localStorage.setItem('snake_personal_best', playerBest);
                 document.getElementById("high-score").innerText = "Best: " + playerBest;
-                alert("🎉 New Personal Record!");
-                
-                // Stream live to web database
                 saveScoreToDatabase(playerBest);
             }
             resetGame();
@@ -166,12 +126,8 @@
 
         function drawGame() {
             if (isPaused) return; 
-
             updateSnakePosition();
-            if (checkGameOver()) {
-                handleGameEnd();
-                return;
-            }
+            if (checkGameOver()) { handleGameEnd(); return; }
             checkFoodCollision();
             clearCanvas();
             drawFood();
@@ -199,14 +155,11 @@
         function updateSnakePosition() {
             let nextX = snake[0].x + dx;
             let nextY = snake[0].y + dy;
-
             if (nextX < 0) nextX = tileCount - 1;
             if (nextX >= tileCount) nextX = 0;
             if (nextY < 0) nextY = tileCount - 1;
             if (nextY >= tileCount) nextY = 0;
-
-            const head = { x: nextX, y: nextY };
-            snake.unshift(head);
+            snake.unshift({ x: nextX, y: nextY });
             snake.pop();
         }
 
@@ -226,9 +179,7 @@
 
         function checkGameOver() {
             for (let i = 1; i < snake.length; i++) {
-                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
-                    return true;
-                }
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
             }
             return false;
         }
@@ -266,9 +217,7 @@
         }
 
         window.addEventListener("keydown", e => {
-            if (e.key === "Escape" || e.key === " ") {
-                togglePause();
-            }
+            if (e.key === "Escape" || e.key === " ") togglePause();
             if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") changeDirection('UP');
             if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") changeDirection('DOWN');
             if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") changeDirection('LEFT');
@@ -282,8 +231,7 @@
                 if (typeof action === 'string') changeDirection(action);
                 else action();
             }, {passive: false});
-            
-            el.addEventListener("mousedown", (e) => { 
+            el.addEventListener("mousedown", () => { 
                 if (typeof action === 'string') changeDirection(action);
                 else action();
             });
@@ -296,24 +244,18 @@
         bindButton("top-pause-btn", togglePause);
 
         document.getElementById("resume-btn").addEventListener("click", togglePause);
-        
         document.getElementById("view-leaderboard-btn").addEventListener("click", () => {
             pauseMenu.style.display = "none";
             leaderboardMenu.style.display = "flex";
             fetchGlobalScores();
         });
-
         document.getElementById("close-leaderboard-btn").addEventListener("click", () => {
             leaderboardMenu.style.display = "none";
             pauseMenu.style.display = "flex";
         });
-        
         document.getElementById("restart-btn").addEventListener("click", () => {
-            if (confirm("Are you sure you want to Restart the Game?")) {
-                resetGame();
-            }
+            if (confirm("Restart game?")) resetGame();
         });
-
         document.getElementById("exit-btn").addEventListener("click", () => {
             window.location.href = "index.html";
         });
