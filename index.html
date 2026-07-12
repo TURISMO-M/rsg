@@ -54,7 +54,7 @@
             }
         });
 
-        // 🟢 Live credentials linked successfully!
+        // Your real Firebase credentials linked successfully
         const firebaseConfig = {
             apiKey: "AIzaSyCvHb-UwPMP8QKaaAswN_pnICOCiS1VjPA",
             authDomain: "snake-arcade-e8b15.firebaseapp.com",
@@ -76,9 +76,17 @@
         const leaderboardMenu = document.getElementById('leaderboardMenu');
         const leaderboardList = document.getElementById('leaderboard-list');
 
+        // Mobile-friendly redirect logic instead of popups
         loginBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(err => alert("Sign in failed: " + err.message));
+            auth.signInWithRedirect(provider);
+        });
+
+        // Automatically captures user details when returning from Google redirect
+        auth.getRedirectResult().catch(err => {
+            if (err.code !== 'auth/redirect-cancelled-by-user') {
+                alert("Sign in error: " + err.message);
+            }
         });
 
         auth.onAuthStateChanged(user => {
