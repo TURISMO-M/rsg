@@ -146,11 +146,11 @@
         }
 
         function updateSnakePosition() {
-            // Calculate next position
+            // Calculate next position based on current velocity
             let nextX = snake[0].x + dx;
             let nextY = snake[0].y + dy;
 
-            // WALL WRAPPING LOGIC: If snake goes past a wall, teleport it to the other side
+            // Screen wrapping calculations
             if (nextX < 0) nextX = tileCount - 1;
             if (nextX >= tileCount) nextX = 0;
             if (nextY < 0) nextY = tileCount - 1;
@@ -166,6 +166,7 @@
                 score += 10;
                 document.getElementById("score").innerText = "Score: " + score;
                 generateFood();
+                // Grow the snake body by adding a segment
                 snake.push({}); 
             }
         }
@@ -176,10 +177,11 @@
         }
 
         function checkGameOver() {
-            // Removed wall collision conditions entirely.
-            // Game only ends if the head coordinates match any body coordinate segment.
+            // Game ONLY ends if the head hits any other part of the body
             for (let i = 1; i < snake.length; i++) {
-                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+                    return true;
+                }
             }
             return false;
         }
@@ -189,31 +191,3 @@
             snake = [{ x: 10, y: 10 }];
             dx = 1; dy = 0; score = 0;
             document.getElementById("score").innerText = "Score: " + score;
-            generateFood();
-            drawGame();
-        }
-
-        function changeDirection(dir) {
-            if (dir === 'UP' && dy !== 1) { dx = 0; dy = -1; }
-            if (dir === 'DOWN' && dy !== -1) { dx = 0; dy = 1; }
-            if (dir === 'LEFT' && dx !== 1) { dx = -1; dy = 0; }
-            if (dir === 'RIGHT' && dx !== -1) { dx = 1; dy = 0; }
-        }
-
-        window.addEventListener("keydown", e => {
-            if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") changeDirection('UP');
-            if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") changeDirection('DOWN');
-            if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") changeDirection('LEFT');
-            if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") changeDirection('RIGHT');
-        });
-
-        document.getElementById("up-btn").addEventListener("pointerdown", () => changeDirection('UP'));
-        document.getElementById("down-btn").addEventListener("pointerdown", () => changeDirection('DOWN'));
-        document.getElementById("left-btn").addEventListener("pointerdown", () => changeDirection('LEFT'));
-        document.getElementById("right-btn").addEventListener("pointerdown", () => changeDirection('RIGHT'));
-
-        generateFood();
-        drawGame();
-    </script>
-</body>
-</html>
