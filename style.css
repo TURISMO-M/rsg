@@ -21,6 +21,7 @@
     --shadow: rgba(0, 0, 0, 0.15);
 }
 
+/* Global resets and homepage centering */
 body {
     margin: 0;
     padding: 0;
@@ -81,7 +82,7 @@ body {
 }
 
 /* ==========================================================================
-   GAME INTERFACE LAYOUT
+   GAME INTERFACE LAYOUT (Keeps your gameplay perfectly square and working!)
    ========================================================================== */
 .game-header {
     display: flex;
@@ -106,6 +107,11 @@ body {
     font-weight: bold;
 }
 
+#score {
+    font-size: 20px;
+    font-weight: bold;
+}
+
 /* Rigid Fixed Box Sizing to stop distortion on any phone model */
 .canvas-container {
     width: 290px;
@@ -120,7 +126,7 @@ body {
 canvas {
     width: 100%;
     height: 100%;
-    background-color: #000000;
+    background-color: transparent;
     display: block;
 }
 
@@ -164,7 +170,7 @@ canvas {
 .menu-btn.restart     { background-color: var(--button-bg); color: var(--button-text); }
 .menu-btn.exit        { background-color: var(--danger-color); color: #fff; }
 
-/* Leaderboard Specific Styling Components */
+/* Leaderboard Specific Layout Components */
 .leaderboard-list {
     width: 100%;
     max-width: 240px;
@@ -173,19 +179,29 @@ canvas {
     gap: 6px;
     margin-bottom: 10px;
 }
+
 .leaderboard-item {
     display: flex;
     justify-content: space-between;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 14px;
     font-weight: bold;
 }
+
 .leaderboard-item.current-player {
     border: 2px solid var(--accent-color);
     background: rgba(0, 255, 0, 0.15);
+}
+
+.leaderboard-itemLoading {
+    color: #aaaaaa;
+    font-size: 13px;
+    text-align: center;
+    padding: 20px 0;
+    font-style: italic;
 }
 
 /* D-PAD Area */
