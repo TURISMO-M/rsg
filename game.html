@@ -33,30 +33,25 @@
 
         .canvas-container {
             width: 90vw;
-            max-width: 340px; 
-            max-height: 35vh; /* Strictly stops it from cutting off on short screens */
-            aspect-ratio: 1 / 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            max-width: 300px; 
+            margin: 0 auto;
         }
 
+        /* Fixed canvas dimensions via CSS scaling for absolute reliability */
         canvas {
             border: 3px solid #333;
             background-color: #000;
-            width: 100%;
-            height: 100%;
             display: block;
+            width: 100%;
+            height: auto;
         }
 
+        /* Classic block controller layout for maximum mobile compatibility */
         .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 8px;
-            width: 150px;
-            height: 150px;
-            margin-top: 10px;
+            width: 160px;
+            height: 160px;
+            margin-top: 15px;
+            position: relative;
         }
 
         .btn {
@@ -64,7 +59,10 @@
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 20px;
+            font-size: 22px;
+            position: absolute;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -78,14 +76,15 @@
             color: black;
         }
 
-        #up-btn    { grid-column: 2; grid-row: 1; }
-        #left-btn  { grid-column: 1; grid-row: 2; }
-        #right-btn { grid-column: 3; grid-row: 2; }
-        #down-btn  { grid-column: 2; grid-row: 3; }
+        /* Absolute positioning guarantees buttons stay perfectly formed on any screen height */
+        #up-btn    { top: 0; left: 55px; }
+        #left-btn  { top: 55px; left: 0; }
+        #right-btn { top: 55px; right: 0; }
+        #down-btn  { bottom: 0; left: 55px; }
 
         @media (min-width: 768px) {
             .controls { display: none; }
-            .canvas-container { max-width: 400px; max-height: 400px; }
+            .canvas-container { max-width: 400px; }
         }
     </style>
 </head>
@@ -95,7 +94,7 @@
     <div id="score">Score: 0</div>
     
     <div class="canvas-container">
-        <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
     </div>
 
     <div class="controls">
@@ -109,13 +108,8 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // DYNAMIC SIZING: Tells the game exactly how big the canvas is in real pixels
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = 300;  // Safe internal logic resolution
-        canvas.height = 300; 
-
-        const gridSize = 15; // Adjusted to perfectly divide 300 (300 / 15 = 20 tiles)
-        const tileCount = canvas.width / gridSize;
+        const gridSize = 15; 
+        const tileCount = canvas.width / gridSize; // 300 / 15 = 20 tiles
 
         let snake = [{ x: 10, y: 10 }];
         let food = { x: 5, y: 5 };
@@ -135,7 +129,7 @@
             clearCanvas();
             drawFood();
             drawSnake();
-            gameInterval = setTimeout(drawGame, 130);
+            gameInterval = setTimeout(drawGame, 140);
         }
 
         function clearCanvas() {
@@ -145,9 +139,9 @@
 
         function drawSnake() {
             ctx.fillStyle = "#00ff00"; 
-            snake.forEach(part => {
-                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 1, gridSize - 1);
-            });
+            for(let i = 0; i < snake.length; i++) {
+                ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 1, gridSize - 1);
+            }
         }
 
         function drawFood() {
@@ -208,6 +202,7 @@
             if (dir === 'RIGHT' && dx !== -1) { dx = 1; dy = 0; }
         }
 
+        // Keyboard support
         window.addEventListener("keydown", e => {
             if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") changeDirection('UP');
             if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") changeDirection('DOWN');
@@ -215,10 +210,17 @@
             if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") changeDirection('RIGHT');
         });
 
-        document.getElementById("up-btn").addEventListener("pointerdown", () => changeDirection('UP'));
-        document.getElementById("down-btn").addEventListener("pointerdown", () => changeDirection('DOWN'));
-        document.getElementById("left-btn").addEventListener("pointerdown", () => changeDirection('LEFT'));
-        document.getElementById("right-btn").addEventListener("pointerdown", () => changeDirection('RIGHT'));
+        // Universal mobile touch listeners (supports older mobile devices perfectly)
+        function bindButton(id, direction) {
+            const el = document.getElementById(id);
+            el.addEventListener("touchstart", (e) => { e.preventDefault(); changeDirection(direction); }, {passive: false});
+            el.addEventListener("mousedown", (e) => { changeDirection(direction); });
+        }
+
+        bindButton("up-btn", "UP");
+        bindButton("down-btn", "DOWN");
+        bindButton("left-btn", "LEFT");
+        bindButton("right-btn", "RIGHT");
 
         generateFood();
         drawGame();
