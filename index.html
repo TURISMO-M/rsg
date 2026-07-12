@@ -3,46 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Game Hub</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #121212;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            text-align: center;
-        }
-        /* Huge, mobile-friendly button for the homepage */
-        .game-btn {
-            background-color: #00ff00;
-            color: black;
-            border: none;
-            padding: 20px 40px; /* Made padding larger */
-            font-size: 24px;    /* Made font size bigger */
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3);
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .game-btn:active {
-            transform: scale(0.95);
-        }
-    </style>
+    <title>Retro Arcade Hub</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-    <div class="container">
-        <a href="game.html" class="game-btn">Play Snake Game</a>
+<body class="dark-theme"> <div class="settings-bar">
+        <button id="theme-toggle" class="icon-btn">🌓 Toggle Theme</button>
     </div>
 
+    <div class="container animate-pop">
+        <h1 class="glow-text">ARCADE HUB</h1>
+        <p class="subtitle">Select a game to begin your session</p>
+        
+        <div class="menu-actions">
+            <a href="game.html" class="game-btn snake-theme">Play Snake Game</a>
+        </div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark-theme';
+        body.className = savedTheme;
+
+        themeToggle.addEventListener('click', () => {
+            if (body.classList.contains('dark-theme')) {
+                body.classList.replace('dark-theme', 'light-theme');
+                localStorage.setItem('theme', 'light-theme');
+            } else {
+                body.classList.replace('light-theme', 'dark-theme');
+                localStorage.setItem('theme', 'dark-theme');
+            }
+        });
+    </script>
 </body>
 </html>
