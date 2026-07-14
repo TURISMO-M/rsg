@@ -182,11 +182,23 @@ canvas {
     font-style: italic;
 }
 
+/* ==========================================================================
+   CONFIGURABLE D-PAD FRAME CONTAINER
+   ========================================================================== */
+.controls-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    z-index: 10;
+}
+
 .controls {
     width: 140px;
     height: 140px;
-    margin-top: 25px;
     position: relative;
+    transform-origin: center top;
+    transition: transform 0.1s ease;
 }
 
 .btn {
@@ -209,8 +221,29 @@ canvas {
 #right-btn { top: 48px; right: 0; }
 #down-btn  { bottom: 0; left: 48px; }
 
+.setting-row {
+    width: 90%;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.setting-row input, .setting-row select {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #222;
+    color: #fff;
+}
+
 @media (min-width: 768px) {
-    .controls { display: none; }
+    .controls-wrapper { display: none; }
     .canvas-container { width: 400px; height: 400px; }
     .game-header { width: 400px; }
 }
