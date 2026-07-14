@@ -13,7 +13,7 @@
 <body class="dark-theme">
 
     <div class="settings-bar">
-        <button id="theme-toggle" class="icon-btn">🌓 Toggle Theme</button>
+        <button id="open-settings-btn" class="icon-btn">⚙️ Settings</button>
     </div>
 
     <div class="container">
@@ -38,11 +38,56 @@
         <button class="menu-btn exit" id="close-leaderboard-btn">Back</button>
     </div>
 
+    <div id="settingsMenu" class="pause-overlay" style="position: fixed;">
+        <div class="pause-title">⚙️ GAME CONFIG</div>
+        
+        <div class="setting-row">
+            <label>Visual Interface Mode:</label>
+            <button id="theme-toggle" class="icon-btn" style="width:100%; text-align:center;">🌓 Switch Theme</button>
+        </div>
+
+        <div class="setting-row">
+            <label>Input Control Mapping:</label>
+            <select id="control-type-select">
+                <option value="dpad">On-Screen D-PAD Box</option>
+                <option value="swipe">Full-Screen Touch Swipe</option>
+            </select>
+        </div>
+
+        <div class="setting-row">
+            <label>Controller Dimensions (Scale):</label>
+            <input type="range" id="control-scale-slider" min="0.6" max="1.5" step="0.05" value="1.0">
+        </div>
+
+        <div class="setting-row">
+            <label>Vertical Position Alignment:</label>
+            <input type="range" id="control-y-slider" min="0" max="150" step="5" value="15">
+        </div>
+
+        <button class="menu-btn resume" id="close-settings-btn" style="margin-top: 15px;">Save & Close</button>
+    </div>
+
     <script>
-        const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
-        const savedTheme = localStorage.getItem('theme') || 'dark-theme';
-        body.className = savedTheme;
+        
+        // Settings Sync
+        const settingsMenu = document.getElementById('settingsMenu');
+        const themeToggle = document.getElementById('theme-toggle');
+        const controlTypeSelect = document.getElementById('control-type-select');
+        const controlScaleSlider = document.getElementById('control-scale-slider');
+        const controlYSlider = document.getElementById('control-y-slider');
+
+        function loadGlobalSettings() {
+            body.className = localStorage.getItem('theme') || 'dark-theme';
+            controlTypeSelect.value = localStorage.getItem('control_type') || 'dpad';
+            controlScaleSlider.value = localStorage.getItem('control_scale') || '1.0';
+            controlYSlider.value = localStorage.getItem('control_y') || '15';
+        }
+
+        document.getElementById('open-settings-btn').addEventListener('click', () => {
+            loadGlobalSettings();
+            settingsMenu.style.display = 'flex';
+        });
 
         themeToggle.addEventListener('click', () => {
             if (body.classList.contains('dark-theme')) {
@@ -54,7 +99,14 @@
             }
         });
 
-        // Your real Firebase credentials linked successfully
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            localStorage.setItem('control_type', controlTypeSelect.value);
+            localStorage.setItem('control_scale', controlScaleSlider.value);
+            localStorage.setItem('control_y', controlYSlider.value);
+            settingsMenu.style.display = 'none';
+        });
+
+        // Live credentials configuration block
         const firebaseConfig = {
             apiKey: "AIzaSyCvHb-UwPMP8QKaaAswN_pnICOCiS1VjPA",
             authDomain: "snake-arcade-e8b15.firebaseapp.com",
@@ -76,13 +128,11 @@
         const leaderboardMenu = document.getElementById('leaderboardMenu');
         const leaderboardList = document.getElementById('leaderboard-list');
 
-        // Mobile-friendly redirect logic instead of popups
         loginBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithRedirect(provider);
         });
 
-        // Automatically captures user details when returning from Google redirect
         auth.getRedirectResult().catch(err => {
             if (err.code !== 'auth/redirect-cancelled-by-user') {
                 alert("Sign in error: " + err.message);
@@ -114,18 +164,14 @@
             database.ref('scores').orderByChild('score').limitToLast(5).once('value', snapshot => {
                 leaderboardList.innerHTML = "";
                 let players = [];
-                
                 snapshot.forEach(childSnapshot => {
                     players.push({ uid: childSnapshot.key, ...childSnapshot.val() });
                 });
-                
-                players.reverse(); // Highest scores on top
-
+                players.reverse();
                 if (players.length === 0) {
                     leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">No scores uploaded yet!</div>';
                     return;
                 }
-
                 players.forEach((player, index) => {
                     const item = document.createElement("div");
                     item.className = "leaderboard-item";
@@ -142,6 +188,8 @@
         document.getElementById('close-leaderboard-btn').addEventListener('click', () => {
             leaderboardMenu.style.display = "none";
         });
+
+        loadGlobalSettings();
     </script>
 </body>
 </html>
