@@ -26,9 +26,34 @@
         <div id="pauseMenu" class="pause-overlay">
             <div class="pause-title">GAME PAUSED</div>
             <button class="menu-btn resume" id="resume-btn">Resume Game</button>
+            <button class="menu-btn leaderboard" id="view-settings-btn">⚙️ Control Settings</button>
             <button class="menu-btn leaderboard" id="view-leaderboard-btn">🏆 Global Leaderboard</button>
             <button class="menu-btn restart" id="restart-btn">Restart</button>
             <button class="menu-btn exit" id="exit-btn">Exit to Hub</button>
+        </div>
+
+        <div id="gameSettingsMenu" class="pause-overlay">
+            <div class="pause-title">⚙️ CONTROLS</div>
+            <div class="setting-row">
+                <label>Theme Option:</label>
+                <button id="theme-toggle" class="icon-btn" style="width:100%; text-align:center;">🌓 Toggle Theme</button>
+            </div>
+            <div class="setting-row">
+                <label>Input System Type:</label>
+                <select id="control-type-select">
+                    <option value="dpad">On-Screen D-PAD Box</option>
+                    <option value="swipe">Full-Screen Touch Swipe</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>Controller Dimensions Scale:</label>
+                <input type="range" id="control-scale-slider" min="0.6" max="1.5" step="0.05" value="1.0">
+            </div>
+            <div class="setting-row">
+                <label>Vertical Position Move:</label>
+                <input type="range" id="control-y-slider" min="0" max="150" step="5" value="15">
+            </div>
+            <button class="menu-btn resume" id="close-settings-btn">Save Rules</button>
         </div>
 
         <div id="leaderboardMenu" class="pause-overlay">
@@ -40,21 +65,29 @@
         </div>
     </div>
 
-    <div class="controls">
-        <button class="btn" id="up-btn">▲</button>
-        <button class="btn" id="left-btn">◀</button>
-        <button class="btn" id="right-btn">▶</button>
-        <button class="btn" id="down-btn">▼</button>
+    <div class="controls-wrapper" id="controls-wrapper-frame">
+        <div class="controls" id="dpad-unit">
+            <button class="btn" id="up-btn">▲</button>
+            <button class="btn" id="left-btn">◀</button>
+            <button class="btn" id="right-btn">▶</button>
+            <button class="btn" id="down-btn">▼</button>
+        </div>
     </div>
 
     <script>
-        document.body.className = localStorage.getItem('theme') || 'dark-theme';
-
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const pauseMenu = document.getElementById("pauseMenu");
         const leaderboardMenu = document.getElementById("leaderboardMenu");
         const leaderboardList = document.getElementById("leaderboard-list");
+        const gameSettingsMenu = document.getElementById("gameSettingsMenu");
+        const dpadUnit = document.getElementById("dpad-unit");
+        const wrapperFrame = document.getElementById("controls-wrapper-frame");
+
+        const controlTypeSelect = document.getElementById('control-type-select');
+        const controlScaleSlider = document.getElementById('control-scale-slider');
+        const controlYSlider = document.getElementById('control-y-slider');
+        const themeToggle = document.getElementById('theme-toggle');
 
         const gridSize = 15; 
         const tileCount = canvas.width / gridSize;
@@ -70,7 +103,24 @@
         let playerBest = parseInt(localStorage.getItem('snake_personal_best')) || 0;
         document.getElementById("high-score").innerText = "Best: " + playerBest;
 
-        // 🟢 Live credentials linked successfully!
+        // Apply Custom Display Layout and Positions
+        function refreshControllerDesign() {
+            document.body.className = localStorage.getItem('theme') || 'dark-theme';
+            
+            const mode = localStorage.getItem('control_type') || 'dpad';
+            const scale = localStorage.getItem('control_scale') || '1.0';
+            const spacingY = localStorage.getItem('control_y') || '15';
+
+            if (mode === 'swipe') {
+                wrapperFrame.style.display = 'none';
+            } else {
+                wrapperFrame.style.display = 'flex';
+                wrapperFrame.style.marginTop = spacingY + 'px';
+                dpadUnit.style.transform = `scale(${scale})`;
+            }
+        }
+
+        // Live credentials implementation 
         const firebaseConfig = {
             apiKey: "AIzaSyCvHb-UwPMP8QKaaAswN_pnICOCiS1VjPA",
             authDomain: "snake-arcade-e8b15.firebaseapp.com",
@@ -106,10 +156,7 @@
         function saveScoreToDatabase(newScore) {
             const user = auth.currentUser;
             if (user) {
-                database.ref('scores/' + user.uid).set({
-                    name: user.displayName,
-                    score: newScore
-                });
+                database.ref('scores/' + user.uid).set({ name: user.displayName, score: newScore });
             }
         }
 
@@ -192,6 +239,7 @@
             } else {
                 pauseMenu.style.display = "none";
                 leaderboardMenu.style.display = "none";
+                gameSettingsMenu.style.display = "none";
                 drawGame();
             }
         }
@@ -205,6 +253,7 @@
             isPaused = false;
             pauseMenu.style.display = "none";
             leaderboardMenu.style.display = "none";
+            gameSettingsMenu.style.display = "none";
             drawGame();
         }
 
@@ -216,6 +265,7 @@
             if (dir === 'RIGHT' && dx !== -1) { dx = 1; dy = 0; }
         }
 
+        // Keyboard inputs
         window.addEventListener("keydown", e => {
             if (e.key === "Escape" || e.key === " ") togglePause();
             if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") changeDirection('UP');
@@ -224,24 +274,54 @@
             if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") changeDirection('RIGHT');
         });
 
+        // ==========================================================================
+        // DYNAMIC SCREEN SWIPE INPUT DETECTOR GESTURES
+        // ==========================================================================
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        window.addEventListener('touchstart', e => {
+            if(localStorage.getItem('control_type') !== 'swipe') return;
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        window.addEventListener('touchend', e => {
+            if(localStorage.getItem('control_type') !== 'swipe') return;
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+            
+            // Determine largest motion vector path axis
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if(Math.abs(diffX) > 30) { // Threshold gap boundary min
+                    if (diffX > 0) changeDirection('RIGHT');
+                    else changeDirection('LEFT');
+                }
+            } else {
+                if(Math.abs(diffY) > 30) {
+                    if (diffY > 0) changeDirection('DOWN');
+                    else changeDirection('UP');
+                }
+            }
+        }, {passive: true});
+
         function bindButton(id, action) {
             const el = document.getElementById(id);
             el.addEventListener("touchstart", (e) => { 
                 e.preventDefault(); 
-                if (typeof action === 'string') changeDirection(action);
-                else action();
+                changeDirection(action);
             }, {passive: false});
-            el.addEventListener("mousedown", () => { 
-                if (typeof action === 'string') changeDirection(action);
-                else action();
-            });
+            el.addEventListener("mousedown", () => { changeDirection(action); });
         }
 
         bindButton("up-btn", "UP");
         bindButton("down-btn", "DOWN");
         bindButton("left-btn", "LEFT");
         bindButton("right-btn", "RIGHT");
-        bindButton("top-pause-btn", togglePause);
+        document.getElementById("top-pause-btn").addEventListener("click", togglePause);
 
         document.getElementById("resume-btn").addEventListener("click", togglePause);
         document.getElementById("view-leaderboard-btn").addEventListener("click", () => {
@@ -253,6 +333,36 @@
             leaderboardMenu.style.display = "none";
             pauseMenu.style.display = "flex";
         });
+
+        // Settings actions in game loop
+        document.getElementById("view-settings-btn").addEventListener("click", () => {
+            pauseMenu.style.display = "none";
+            controlTypeSelect.value = localStorage.getItem('control_type') || 'dpad';
+            controlScaleSlider.value = localStorage.getItem('control_scale') || '1.0';
+            controlYSlider.value = localStorage.getItem('control_y') || '15';
+            gameSettingsMenu.style.display = "flex";
+        });
+
+        themeToggle.addEventListener('click', () => {
+            const body = document.body;
+            if (body.classList.contains('dark-theme')) {
+                body.className = 'light-theme';
+                localStorage.setItem('theme', 'light-theme');
+            } else {
+                body.className = 'dark-theme';
+                localStorage.setItem('theme', 'dark-theme');
+            }
+        });
+
+        document.getElementById("close-settings-btn").addEventListener("click", () => {
+            localStorage.setItem('control_type', controlTypeSelect.value);
+            localStorage.setItem('control_scale', controlScaleSlider.value);
+            localStorage.setItem('control_y', controlYSlider.value);
+            refreshControllerDesign();
+            gameSettingsMenu.style.display = "none";
+            pauseMenu.style.display = "flex";
+        });
+
         document.getElementById("restart-btn").addEventListener("click", () => {
             if (confirm("Restart game?")) resetGame();
         });
@@ -260,6 +370,7 @@
             window.location.href = "index.html";
         });
 
+        refreshControllerDesign();
         generateFood();
         drawGame();
     </script>
