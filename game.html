@@ -12,6 +12,8 @@
 </head>
 <body>
 
+    <audio id="bg-music" src="background-music.mp3" loop></audio>
+
     <div class="game-header">
         <button id="top-pause-btn" class="pause-trigger-btn">⏸ Pause</button>
         <div class="score-container">
@@ -102,6 +104,30 @@
 
         let playerBest = parseInt(localStorage.getItem('snake_personal_best')) || 0;
         document.getElementById("high-score").innerText = "Best: " + playerBest;
+
+        // Background Music Control
+        const bgMusic = document.getElementById("bg-music");
+        let musicStarted = false;
+
+        function startMusic() {
+            if (!musicStarted) {
+                bgMusic.volume = 0.35; // Sets volume to 35% (pleasant background level)
+                bgMusic.play().then(() => {
+                    musicStarted = true;
+                    // Remove listeners once music successfully plays
+                    document.removeEventListener('click', startMusic);
+                    document.removeEventListener('keydown', startMusic);
+                    document.removeEventListener('touchstart', startMusic);
+                }).catch(err => {
+                    console.log("Audio context waiting for user action...");
+                });
+            }
+        }
+
+        // Play the music as soon as the user touches/clicks anywhere or uses controls
+        document.addEventListener('click', startMusic);
+        document.addEventListener('keydown', startMusic);
+        document.addEventListener('touchstart', startMusic);
 
         function refreshControllerDesign() {
             document.body.className = localStorage.getItem('theme') || 'dark-theme';
