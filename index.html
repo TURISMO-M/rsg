@@ -9,21 +9,44 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        /* Top-Left User Display */
+        .user-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            background-color: var(--surface-color);
+            color: var(--accent-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 2px solid var(--button-bg);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 20;
+            display: none; /* Hidden by default */
+        }
+    </style>
 </head>
 <body class="dark-theme">
+
+    <div id="user-badge" class="user-badge"></div>
 
     <div class="settings-bar">
         <button id="open-settings-btn" class="icon-btn">⚙️ Settings</button>
     </div>
 
-    <div class="container">
+    <div class="container" style="margin-top: 50px;">
         <div id="auth-box" style="margin-bottom: 25px;">
             <button id="login-btn" class="menu-btn resume" style="width: 210px;">Sign in with Google</button>
             <div id="player-profile" style="display: none; font-size: 16px; font-weight: bold;">
                 Welcome, <span id="player-name" style="color: var(--accent-color);">Player</span>!<br>
                 <span id="personal-best" style="font-size: 14px; opacity: 0.8;">Best Score: 0</span>
                 <br>
-                <button id="logout-btn" style="margin-top: 8px; background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Sign Out</button>
+                <button id="logout-btn" style="margin-top: 12px; background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Sign Out</button>
             </div>
         </div>
 
@@ -103,7 +126,7 @@
             settingsMenu.style.display = 'none';
         });
 
-        // Fresh configuration linked below
+        // Your exact Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyCvHb-UwPMP8QKaaAswN_pnICOCiS1VjPA",
             authDomain: "snake-arcade-e8b15.firebaseapp.com",
@@ -126,6 +149,7 @@
         const personalBestText = document.getElementById('personal-best');
         const leaderboardMenu = document.getElementById('leaderboardMenu');
         const leaderboardList = document.getElementById('leaderboard-list');
+        const userBadge = document.getElementById('user-badge');
 
         loginBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -148,11 +172,17 @@
             console.error("Authentication Processing Error:", err.message);
         });
 
+        // Keep watch of auth state and update UI
         auth.onAuthStateChanged(user => {
             if (user) {
-                loginBtn.style.display = 'none';
+                // User is Signed In
+                loginBtn.style.display = 'none'; // Hide "Sign in with Google" button
                 playerProfile.style.display = 'block';
                 playerName.innerText = user.displayName;
+
+                // Show top-left email badge
+                userBadge.innerText = user.email;
+                userBadge.style.display = 'block';
 
                 database.ref('scores/' + user.uid).on('value', snapshot => {
                     const data = snapshot.val();
@@ -161,8 +191,13 @@
                     personalBestText.innerText = "Best Score: " + record;
                 });
             } else {
-                loginBtn.style.display = 'block';
+                // User is Signed Out
+                loginBtn.style.display = 'block'; // Show "Sign in with Google" button
                 playerProfile.style.display = 'none';
+                
+                // Hide top-left email badge
+                userBadge.style.display = 'none';
+                userBadge.innerText = '';
             }
         });
 
