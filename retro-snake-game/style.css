@@ -1,0 +1,249 @@
+:root {
+    --bg-color: #121212;
+    --surface-color: #1e1e1e;
+    --text-color: #ffffff;
+    --accent-color: #00ff00;
+    --danger-color: #ff3333;
+    --button-bg: #333333;
+    --button-text: #ffffff;
+    --shadow: rgba(0, 255, 0, 0.3);
+}
+
+.light-theme {
+    --bg-color: #f0f2f5;
+    --surface-color: #ffffff;
+    --text-color: #1a1a1a;
+    --accent-color: #00aa00;
+    --danger-color: #cc0000;
+    --button-bg: #dddddd;
+    --button-text: #1a1a1a;
+    --shadow: rgba(0, 0, 0, 0.15);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
+    touch-action: none;
+    transition: background 0.3s, color 0.3s;
+}
+
+.settings-bar {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 20;
+}
+.icon-btn {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 2px solid var(--button-bg);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.container {
+    text-align: center;
+}
+
+.game-btn {
+    background-color: var(--accent-color);
+    color: #000000;
+    border: none;
+    padding: 20px 40px; 
+    font-size: 24px;    
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px var(--shadow);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 290px;
+    margin-bottom: 10px;
+}
+
+.pause-trigger-btn {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 2px solid var(--button-bg);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.score-container {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.canvas-container {
+    width: 290px;
+    height: 290px;
+    position: relative;
+    border: 4px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.pause-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.94);
+    display: none; 
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.pause-title {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.menu-btn {
+    width: 170px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.menu-btn.resume      { background-color: var(--accent-color); color: #000; }
+.menu-btn.leaderboard { background-color: #cca000; color: #000; }
+.menu-btn.restart     { background-color: var(--button-bg); color: var(--button-text); }
+.menu-btn.exit        { background-color: var(--danger-color); color: #fff; }
+
+.leaderboard-list {
+    width: 100%;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.leaderboard-item.current-player {
+    border: 2px solid var(--accent-color);
+    background: rgba(0, 255, 0, 0.15);
+}
+
+.leaderboard-itemLoading {
+    color: #aaaaaa;
+    font-size: 13px;
+    text-align: center;
+    padding: 20px 0;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   CONFIGURABLE D-PAD FRAME CONTAINER
+   ========================================================================== */
+.controls-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    z-index: 10;
+}
+
+.controls {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    transform-origin: center top;
+    transition: transform 0.1s ease;
+}
+
+.btn {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 2px solid var(--button-bg);
+    border-radius: 14px;
+    font-size: 20px;
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#up-btn    { top: 0; left: 48px; }
+#left-btn  { top: 48px; left: 0; }
+#right-btn { top: 48px; right: 0; }
+#down-btn  { bottom: 0; left: 48px; }
+
+.setting-row {
+    width: 90%;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.setting-row input, .setting-row select {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #222;
+    color: #fff;
+}
+
+@media (min-width: 768px) {
+    .controls-wrapper { display: none; }
+    .canvas-container { width: 400px; height: 400px; }
+    .game-header { width: 400px; }
+}
