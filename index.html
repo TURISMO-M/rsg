@@ -10,125 +10,132 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
             background-color: #0a0a0a;
-            color: #39ff14; /* Neon Green */
+            color: #39ff14;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* Retro Grid Background Effect */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: 
-                radial-gradient(rgba(0, 30, 0, 0.5), #000),
-                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100%, 100% 4px, 6px 100%;
+                linear-gradient(rgba(57, 255, 20, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(57, 255, 20, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 1;
+            pointer-events: none;
         }
 
-        /* Header / Title Styles */
-        header {
+        /* Container */
+        .hub-container {
             text-align: center;
-            margin-bottom: 50px;
+            z-index: 2;
+            padding: 20px;
         }
 
+        /* Header Styling */
         h1 {
             font-size: 4rem;
             text-transform: uppercase;
             letter-spacing: 4px;
-            color: #39ff14;
+            margin-bottom: 10px;
+            color: #fff;
             text-shadow: 
                 0 0 5px #39ff14,
                 0 0 10px #39ff14,
-                0 0 20px #1f8b0c,
-                0 0 40px #1f8b0c;
-            animation: flicker 2s infinite alternate;
+                0 0 20px #39ff14,
+                0 0 40px #1f800b;
+            animation: pulse 2s infinite alternate;
         }
 
         p {
             color: #888;
             font-size: 1.2rem;
-            margin-top: 10px;
-            letter-spacing: 2px;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
         }
 
-        /* Horizontal Button Container */
-        .btn-container {
+        /* Button Container (Horizontal Layout) */
+        .button-group {
             display: flex;
-            gap: 30px;
+            gap: 25px;
             justify-content: center;
             flex-wrap: wrap;
         }
 
-        /* Arcade Button Styles */
+        /* Arcade Button Styling */
         .arcade-btn {
             display: inline-block;
             text-decoration: none;
             color: #39ff14;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: bold;
             text-transform: uppercase;
-            padding: 15px 35px;
-            border: 3px solid #39ff14;
-            border-radius: 8px;
-            background: transparent;
+            padding: 15px 30px;
+            border: 2px solid #39ff14;
+            border-radius: 5px;
+            background-color: transparent;
             cursor: pointer;
-            position: relative;
             transition: all 0.3s ease;
-            box-shadow: 
-                inset 0 0 10px rgba(57, 255, 20, 0.2),
-                0 0 10px rgba(57, 255, 20, 0.2);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+            position: relative;
+            overflow: hidden;
         }
 
         /* Button Hover Effects */
         .arcade-btn:hover {
             color: #0a0a0a;
             background-color: #39ff14;
-            box-shadow: 
-                0 0 20px #39ff14,
-                0 0 40px #39ff14;
-            transform: translateY(-5px);
+            box-shadow: 0 0 25px #39ff14, 0 0 50px rgba(57, 255, 20, 0.5);
+            transform: translateY(-3px);
         }
 
         .arcade-btn:active {
-            transform: translateY(-1px);
-            box-shadow: 0 0 10px #39ff14;
+            transform: translateY(1px);
+            box-shadow: 0 0 15px #39ff14;
         }
 
-        /* Neon Flicker Animation */
-        @keyframes flicker {
-            0%, 18%, 22%, 25%, 53%, 57%, 100% {
-                text-shadow: 
-                    0 0 5px #39ff14,
-                    0 0 10px #39ff14,
-                    0 0 20px #1f8b0c,
-                    0 0 40px #1f8b0c;
+        /* Title Animation */
+        @keyframes pulse {
+            from {
+                text-shadow: 0 0 5px #39ff14, 0 0 10px #39ff14, 0 0 20px #39ff14;
             }
-            20%, 24%, 55% {        
-                text-shadow: none;
+            to {
+                text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 35px #39ff14, 0 0 50px #1f800b;
             }
         }
     </style>
 </head>
 <body>
 
-    <header>
+    <div class="hub-container">
         <h1>Arcade Hub</h1>
-        <p>Select your game insert coin to play</p>
-    </header>
-
-    <div class="btn-container">
-        <a href="https://turismo-m.github.io/arcade_hub/retro_snake_game" class="arcade-btn">
-            Retro Snake Game
-        </a>
-        <a href="https://turismo-m.github.io/arcade_hub/labyrinth_game" class="arcade-btn">
-            Labyrinth Game
-        </a>
+        <p>Select your game to begin</p>
+        
+        <div class="button-group">
+            <a href="https://turismo-m.github.io/arcade-hub/retro-snake-game" class="arcade-btn">
+                Retro Snake Game
+            </a>
+            <a href="https://turismo-m.github.io/arcade-hub/labyrinth-game" class="arcade-btn">
+                Labyrinth Game
+            </a>
+        </div>
     </div>
 
 </body>
 </html>
-
