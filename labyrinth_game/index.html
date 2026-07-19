@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wooden Labyrinth Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #2c1d11;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #f5ead4;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        /* The Outer Wooden Frame */
+        #game-container {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            background: #8B5A2B; /* Mahogany/Wood color */
+            border: 15px solid #5c3a1a;
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        /* The Ball */
+        #ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 6px 6px, #ffffff, #a6a6a6, #595959);
+            border-radius: 50%;
+            box-shadow: 2px 4px 6px rgba(0,0,0,0.4);
+            z-index: 10;
+        }
+
+        /* Walls */
+        .wall {
+            position: absolute;
+            background: #5c3a1a;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Holes */
+        .hole {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, #000000 60%, #333 100%);
+            border-radius: 50%;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.9);
+        }
+
+        /* Goal */
+        #goal {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            background: #27ae60;
+            border: 3px double #fff;
+            border-radius: 50%;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* UI Overlay */
+        #message {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            height: 25px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #cd853f;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8b5a2b;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Wooden Labyrinth</h1>
+    <div id="game-container">
+        <div id="ball"></div>
+        <div id="goal"></div>
+        </div>
+
+    <div id="message">Use Arrow Keys to Tilt the Board!</div>
+    <button onclick="resetGame()">Reset Game</button>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const ballElement = document.getElementById('ball');
+        const goalElement = document.getElementById('goal');
+        const messageElement = document.getElementById('message');
+
+        // Game Configuration
+        const boardSize = 420; // 450px minus 30px border
+        let ball = { x: 20, y: 20, vx: 0, vy: 0, radius: 10 };
+        const goal = { x: 370, y: 370, radius: 13 };
+        
+        // Tilt/Physics physics variables
+        let targetTiltX = 0;
+        let targetTiltY = 0;
+        const friction = 0.98;
+        const accelerationFactor = 0.15;
+
+        // Level Design: Walls (x, y, width, height)
+        const walls = [
+            { x: 0, y: 80, w: 300, h: 12 },
+            { x: 120, y: 160, w: 300, h: 12 },
+            { x: 0, y: 240, w: 200, h: 12 },
+            { x: 280, y: 240, w: 140, h: 12 },
+            { x: 100, y: 320, w: 240, h: 12 },
+            { x: 200, y: 80, w: 12, h: 80 }
+        ];
+
+        // Level Design: Holes (x, y)
+        const holes = [
+            { x: 340, y: 40 },
+            { x: 60, y: 120 },
+            { x: 250, y: 200 },
+            { x: 50, y: 280 },
+            { x: 380, y: 280 }
+        ];
+
+        let keys = {};
+        let isGameOver = false;
+
+        // Render Map elements dynamically
+        function setupMap() {
+            // Place Goal
+            goalElement.style.left = goal.x + 'px';
+            goalElement.style.top = goal.y + 'px';
+
+            // Build Walls
+            walls.forEach(w => {
+                const wallDiv = document.createElement('div');
+                wallDiv.className = 'wall';
+                wallDiv.style.left = w.x + 'px';
+                wallDiv.style.top = w.y + 'px';
+                wallDiv.style.width = w.w + 'px';
+                wallDiv.style.height = w.h + 'px';
+                container.appendChild(wallDiv);
+            });
+
+            // Build Holes
+            holes.forEach(h => {
+                const holeDiv = document.createElement('div');
+                holeDiv.className = 'hole';
+                holeDiv.style.left = (h.x - 12) + 'px';
+                holeDiv.style.top = (h.y - 12) + 'px';
+                container.appendChild(holeDiv);
+            });
+        }
+
+        // Keyboard Controls for Tilt simulation
+        window.addEventListener('keydown', e => { keys[e.code] = true; });
+        window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+        // Mobile Device Orientation (Real Tilting!)
+        window.addEventListener('deviceorientation', e => {
+            if (isGameOver) return;
+            // Gamma: Left/Right tilt (-90 to 90), Beta: Front/Back tilt (-180 to 180)
+            targetTiltX = e.gamma * 0.08; 
+            targetTiltY = e.beta * 0.08;
+        });
+
+        function handleKeyboardInput() {
+            if (keys['ArrowLeft']) targetTiltX = -2;
+            else if (keys['ArrowRight']) targetTiltX = 2;
+            else targetTiltX = 0;
+
+            if (keys['ArrowUp']) targetTiltY = -2;
+            else if (keys['ArrowDown']) targetTiltY = 2;
+            else targetTiltY = 0;
+        }
+
+        // Collision Check: Ball vs Wall
+        function checkWallCollisions(nextX, nextY) {
+            let correctedX = nextX;
+            let correctedY = nextY;
+
+            walls.forEach(w => {
+                // Find closest point on wall to ball center
+                let closestX = Math.max(w.x, Math.min(correctedX + ball.radius, w.x + w.w));
+                let closestY = Math.max(w.y, Math.min(correctedY + ball.radius, w.y + w.h));
+
+                // Distance calculation
+                let distanceX = (correctedX + ball.radius) - closestX;
+                let distanceY = (correctedY + ball.radius) - closestY;
+                let distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+                if (distanceSquared < (ball.radius * ball.radius)) {
+                    // Simple bounce/stop collision logic
+                    if (Math.abs(distanceX) > Math.abs(distanceY)) {
+                        ball.vx *= -0.3; // bounce slightly
+                        correctedX = distanceX > 0 ? closestX : closestX - ball.radius * 2;
+                    } else {
+                        ball.vy *= -0.3;
+                        correctedY = distanceY > 0 ? closestY : closestY - ball.radius * 2;
+                    }
+                }
+            });
+
+            // Boundary Collisions
+            if (correctedX < 0) { correctedX = 0; ball.vx *= -0.3; }
+            if (correctedX > boardSize - ball.radius * 2) { correctedX = boardSize - ball.radius * 2; ball.vx *= -0.3; }
+            if (correctedY < 0) { correctedY = 0; ball.vy *= -0.3; }
+            if (correctedY > boardSize - ball.radius * 2) { correctedY = boardSize - ball.radius * 2; ball.vy *= -0.3; }
+
+            return { x: correctedX, y: correctedY };
+        }
+
+        // Game Loop
+        function update() {
+            if (isGameOver) return;
+
+            handleKeyboardInput();
+
+            // Apply tilt to acceleration
+            ball.vx += targetTiltX * accelerationFactor;
+            ball.vy += targetTiltY * accelerationFactor;
+
+            // Apply friction
+            ball.vx *= friction;
+            ball.vy *= friction;
+
+            // Tentative next positions
+            let nextX = ball.x + ball.vx;
+            let nextY = ball.y + ball.vy;
+
+            // Handle wall collisions
+            let outcome = checkWallCollisions(nextX, nextY);
+            ball.x = outcome.x;
+            ball.y = outcome.y;
+
+            // Update Ball Style
+            ballElement.style.left = ball.x + 'px';
+            ballElement.style.top = ball.y + 'px';
+
+            // Visually tilt the board container slightly for 3D effect
+            container.style.transform = `rotateY(${targetTiltX * 4}deg) rotateX(${-targetTiltY * 4}deg)`;
+
+            // Check Holes trigger
+            const ballCenterX = ball.x + ball.radius;
+            const ballCenterY = ball.y + ball.radius;
+
+            holes.forEach(h => {
+                let dist = Math.hypot(ballCenterX - h.x, ballCenterY - h.y);
+                if (dist < 16) { // inside the hole radius
+                    isGameOver = true;
+                    messageElement.textContent = "Oops! You fell into a hole! 🕳️";
+                    ballElement.style.transform = "scale(0)"; // fall in animation effect
+                    ballElement.style.transition = "transform 0.3s ease";
+                }
+            });
+
+            // Check Goal trigger
+            let distToGoal = Math.hypot(ballCenterX - (goal.x + goal.radius), ballCenterY - (goal.y + goal.radius));
+            if (distToGoal < 15) {
+                isGameOver = true;
+                messageElement.textContent = "You Win! 🎉 Horizon reached!";
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        function resetGame() {
+            ball = { x: 20, y: 20, vx: 0, vy: 0, radius: 10 };
+            ballElement.style.transform = "scale(1)";
+            ballElement.style.transition = "none";
+            isGameOver = false;
+            messageElement.textContent = "Use Arrow Keys to Tilt the Board!";
+            requestAnimationFrame(update);
+        }
+
+        // Start everything up
+        setupMap();
+        resetGame();
+    </script>
+</body>
+</html>
+
