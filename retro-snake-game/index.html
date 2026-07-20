@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en')">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,26 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        /* Top-Left User Display Badge */
-        .user-badge {
-            position: absolute;
-            top: 15px;
-            left: 75px; /* Shifted right slightly to sit cleanly next to the back arrow */
-            font-size: 13px;
-            font-weight: bold;
-            background-color: var(--surface-color);
-            color: var(--accent-color);
-            padding: 8px 12px;
-            border-radius: 20px;
-            border: 2px solid var(--button-bg);
-            max-width: 160px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            z-index: 20;
-            display: none;
-        }
-
         /* Top-Left Back Navigation Arrow */
         .hub-back-nav {
             position: absolute;
@@ -47,6 +27,26 @@
             text-decoration: none;
             display: flex;
             align-items: center;
+        }
+
+        /* Top-Left User Display Name Badge */
+        .user-badge {
+            position: absolute;
+            top: 15px;
+            left: 95px; /* Shifted over cleanly to fit right beside the new hub arrow button */
+            font-size: 13px;
+            font-weight: bold;
+            background-color: var(--surface-color);
+            color: var(--accent-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 2px solid var(--button-bg);
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 20;
+            display: none;
         }
     </style>
 </head>
@@ -197,7 +197,7 @@
                 playerProfile.style.display = 'block';
                 playerName.innerText = user.displayName;
 
-                // CHANGED: Display the Account Profile Name string instead of the long email
+                // Shows Profile Display Name string
                 userBadge.innerText = user.displayName;
                 userBadge.style.display = 'block';
                 settingsAuthActions.style.display = 'block';
