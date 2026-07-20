@@ -9,12 +9,34 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        /* Top-Left Back Navigation Arrow styling */
+        .game-back-nav {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 25;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            border: 2px solid var(--button-bg);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
 
+    <a href="index.html" class="game-back-nav">⬅ Menu</a>
+
     <audio id="bg-music" src="background-music.mp3" loop></audio>
 
-    <div class="game-header">
+    <div class="game-header" style="margin-top: 50px;">
         <button id="top-pause-btn" class="pause-trigger-btn">⏸ Pause</button>
         <div class="score-container">
             <span id="score">Score: 0</span> | 
@@ -31,7 +53,7 @@
             <button class="menu-btn leaderboard" id="view-settings-btn">⚙️ Control Settings</button>
             <button class="menu-btn leaderboard" id="view-leaderboard-btn">🏆 Global Leaderboard</button>
             <button class="menu-btn restart" id="restart-btn">Restart</button>
-            <button class="menu-btn exit" id="exit-btn">Exit to Hub</button>
+            <button class="menu-btn exit" id="exit-btn">Exit to Menu</button>
         </div>
 
         <div id="gameSettingsMenu" class="pause-overlay">
@@ -105,16 +127,14 @@
         let playerBest = parseInt(localStorage.getItem('snake_personal_best')) || 0;
         document.getElementById("high-score").innerText = "Best: " + playerBest;
 
-        // Background Music Control
         const bgMusic = document.getElementById("bg-music");
         let musicStarted = false;
 
         function startMusic() {
             if (!musicStarted) {
-                bgMusic.volume = 0.35; // Sets volume to 35% (pleasant background level)
+                bgMusic.volume = 0.35; 
                 bgMusic.play().then(() => {
                     musicStarted = true;
-                    // Remove listeners once music successfully plays
                     document.removeEventListener('click', startMusic);
                     document.removeEventListener('keydown', startMusic);
                     document.removeEventListener('touchstart', startMusic);
@@ -124,7 +144,6 @@
             }
         }
 
-        // Play the music as soon as the user touches/clicks anywhere or uses controls
         document.addEventListener('click', startMusic);
         document.addEventListener('keydown', startMusic);
         document.addEventListener('touchstart', startMusic);
@@ -144,7 +163,6 @@
             }
         }
 
-        // Fresh configuration linked below
         const firebaseConfig = {
             apiKey: "AIzaSyCvHb-UwPMP8QKaaAswN_pnICOCiS1VjPA",
             authDomain: "snake-arcade-e8b15.firebaseapp.com",
