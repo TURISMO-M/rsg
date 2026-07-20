@@ -6,7 +6,7 @@
     --danger-color: #ff3333;
     --button-bg: #333333;
     --button-text: #ffffff;
-    --shadow: rgba(0, 255, 0, 0.3);
+    --shadow: rgba(0, 255, 0, 0.4);
 }
 
 .light-theme {
@@ -37,47 +37,16 @@ body {
     transition: background 0.3s, color 0.3s;
 }
 
-.settings-bar {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 20;
-}
-.icon-btn {
-    background-color: var(--surface-color);
-    color: var(--text-color);
-    border: 2px solid var(--button-bg);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.container {
-    text-align: center;
-}
-
-.game-btn {
-    background-color: var(--accent-color);
-    color: #000000;
-    border: none;
-    padding: 20px 40px; 
-    font-size: 24px;    
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px var(--shadow);
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-block;
-}
-
+/* =========================================================================
+   CANVAS VIEWPORT LAYOUT & HEADER CONTROLS
+   ========================================================================== */
 .game-header {
+    width: 300px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 290px;
     margin-bottom: 10px;
+    z-index: 10;
 }
 
 .pause-trigger-btn {
@@ -86,104 +55,172 @@ body {
     border: 2px solid var(--button-bg);
     padding: 6px 12px;
     border-radius: 8px;
-    font-weight: bold;
     cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
 }
 
 .score-container {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
 }
 
 .canvas-container {
-    width: 290px;
-    height: 290px;
     position: relative;
-    border: 4px solid #333;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    width: 300px;
+    height: 300px;
+    box-shadow: 0 0 20px var(--shadow);
+    border-radius: 4px;
 }
 
 canvas {
-    width: 100%;
-    height: 100%;
+    background-color: #000;
     display: block;
+    border-radius: 4px;
 }
 
+/* =========================================================================
+   NEON COUNTDOWN TIMER OVERLAY
+   ========================================================================== */
+.countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 15;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.countdown-number {
+    font-size: 80px;
+    font-weight: 900;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px var(--accent-color), 0 0 30px var(--accent-color);
+    animation: bounceScale 1s ease-in-out infinite;
+}
+
+@keyframes bounceScale {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    30% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(1.0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+/* =========================================================================
+   MODAL DIALOG & MENUS OVERLAYS
+   ========================================================================== */
 .pause-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.94);
-    display: none; 
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: none;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    gap: 10px;
-    z-index: 100;
-    padding: 15px;
-    box-sizing: border-box;
+    justify-content: center;
+    z-index: 20;
+    border-radius: 4px;
 }
 
 .pause-title {
-    color: #ffffff;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
-    margin-bottom: 5px;
-    letter-spacing: 1px;
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px var(--shadow);
 }
 
 .menu-btn {
-    width: 170px;
+    width: 180px;
     padding: 10px;
-    font-size: 14px;
-    font-weight: bold;
+    margin: 6px 0;
     border: none;
     border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    text-align: center;
+    color: #fff;
 }
-.menu-btn.resume      { background-color: var(--accent-color); color: #000; }
-.menu-btn.leaderboard { background-color: #cca000; color: #000; }
-.menu-btn.restart     { background-color: var(--button-bg); color: var(--button-text); }
-.menu-btn.exit        { background-color: var(--danger-color); color: #fff; }
 
+.menu-btn:active {
+    transform: scale(0.95);
+}
+
+.menu-btn.resume { background-color: #28a745; }
+.menu-btn.leaderboard { background-color: #17a2b8; }
+.menu-btn.restart { background-color: #ffc107; color: #111; }
+.menu-btn.exit { background-color: #dc3545; }
+
+/* =========================================================================
+   LIVE SCOREBOARD RECORDS VIEW
+   ========================================================================== */
 .leaderboard-list {
-    width: 100%;
-    max-width: 240px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 10px;
+    width: 85%;
+    max-height: 140px;
+    overflow-y: auto;
+    margin-bottom: 15px;
 }
 
 .leaderboard-item {
     display: flex;
     justify-content: space-between;
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 14px;
+    padding: 6px 10px;
+    margin: 4px 0;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    font-size: 13px;
 }
 
 .leaderboard-item.current-player {
-    border: 2px solid var(--accent-color);
-    background: rgba(0, 255, 0, 0.15);
+    border: 1px solid var(--accent-color);
+    background: rgba(0, 255, 0, 0.1);
+    font-weight: bold;
 }
 
 .leaderboard-itemLoading {
-    color: #aaaaaa;
-    font-size: 13px;
     text-align: center;
-    padding: 20px 0;
     font-style: italic;
+    opacity: 0.7;
+    padding: 10px;
+    font-size: 13px;
 }
 
-/* ==========================================================================
-   CONFIGURABLE D-PAD FRAME CONTAINER
+.icon-btn {
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--button-bg);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+/* =========================================================================
+   CONFIGURABLE D-PAD FRAME CONTAINER WITH GREEN GLOW
    ========================================================================== */
 .controls-wrapper {
     width: 100%;
@@ -204,7 +241,7 @@ canvas {
 .btn {
     background-color: var(--surface-color);
     color: var(--text-color);
-    border: 2px solid var(--button-bg);
+    border: 2px solid var(--accent-color); /* Changed to use the neon green layout line border */
     border-radius: 14px;
     font-size: 20px;
     position: absolute;
@@ -213,7 +250,16 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    /* CHANGED: Restored the bright, matching neon green glow box-shadow signature here */
+    box-shadow: 0 0 8px var(--accent-color), inset 0 0 4px var(--accent-color);
+    cursor: pointer;
+    transition: background-color 0.1s, transform 0.1s;
+}
+
+.btn:active {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    transform: scale(0.92);
 }
 
 #up-btn    { top: 0; left: 48px; }
@@ -226,24 +272,21 @@ canvas {
     max-width: 240px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
     margin-bottom: 8px;
-    color: #ffffff;
-    font-size: 14px;
+    text-align: left;
 }
 
-.setting-row input, .setting-row select {
-    width: 100%;
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid #555;
-    background: #222;
-    color: #fff;
+.setting-row label {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-bottom: 3px;
 }
 
-@media (min-width: 768px) {
-    .controls-wrapper { display: none; }
-    .canvas-container { width: 400px; height: 400px; }
-    .game-header { width: 400px; }
+.setting-row select, .setting-row input {
+    padding: 4px;
+    border-radius: 4px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--button-bg);
+    font-size: 12px;
 }
