@@ -37,6 +37,8 @@
             border: 15px solid #5c3a1a;
             border-radius: 8px;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.7);
+            perspective: 600px; /* Gives depth to 3D board tilt */
+            transition: transform 0.1s ease-out;
         }
 
         /* The Ball */
@@ -84,16 +86,18 @@
             font-size: 1.2rem;
             font-weight: bold;
             height: 25px;
+            text-align: center;
         }
 
         button {
-            margin-top: 10px;
-            padding: 10px 20px;
+            margin-top: 15px;
+            padding: 12px 25px;
             background: #cd853f;
             border: none;
             border-radius: 4px;
             color: #fff;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
             box-shadow: 0 4px 0 #8b5a2b;
         }
@@ -110,10 +114,10 @@
     <div id="game-container">
         <div id="ball"></div>
         <div id="goal"></div>
-        </div>
+    </div>
 
-    <div id="message">Use Arrow Keys to Tilt the Board!</div>
-    <button onclick="resetGame()">Reset Game</button>
+    <div id="message">Tap "Start / Reset" to Activate Controls!</div>
+    <button onclick="resetGame()">Start / Reset Game</button>
 
     <script>
         const container = document.getElementById('game-container');
@@ -122,17 +126,17 @@
         const messageElement = document.getElementById('message');
 
         // Game Configuration
-        const boardSize = 420; // 450px minus 30px border
+        const boardSize = 420; // 450px minus 30px total border
         let ball = { x: 20, y: 20, vx: 0, vy: 0, radius: 10 };
         const goal = { x: 370, y: 370, radius: 13 };
         
-        // Tilt/Physics physics variables
+        // Tilt/Physics variables
         let targetTiltX = 0;
         let targetTiltY = 0;
         const friction = 0.98;
         const accelerationFactor = 0.15;
 
-        // Level Design: Walls (x, y, width, height)
+        // Level Layout: Walls (x, y, width, height)
         const walls = [
             { x: 0, y: 80, w: 300, h: 12 },
             { x: 120, y: 160, w: 300, h: 12 },
@@ -142,7 +146,7 @@
             { x: 200, y: 80, w: 12, h: 80 }
         ];
 
-        // Level Design: Holes (x, y)
+        // Level Layout: Holes (x, y)
         const holes = [
             { x: 340, y: 40 },
             { x: 60, y: 120 },
@@ -152,7 +156,8 @@
         ];
 
         let keys = {};
-        let isGameOver = false;
+        let isGameOver = true; // Wait for button click to start loop
+        let sensorsInitialized = false;
 
         // Render Map elements dynamically
         function setupMap() {
@@ -181,47 +186,72 @@
             });
         }
 
-        // Keyboard Controls for Tilt simulation
+        // Desktop Keyboard Setup
         window.addEventListener('keydown', e => { keys[e.code] = true; });
         window.addEventListener('keyup', e => { keys[e.code] = false; });
-
-        // Mobile Device Orientation (Real Tilting!)
-        window.addEventListener('deviceorientation', e => {
-            if (isGameOver) return;
-            // Gamma: Left/Right tilt (-90 to 90), Beta: Front/Back tilt (-180 to 180)
-            targetTiltX = e.gamma * 0.08; 
-            targetTiltY = e.beta * 0.08;
-        });
 
         function handleKeyboardInput() {
             if (keys['ArrowLeft']) targetTiltX = -2;
             else if (keys['ArrowRight']) targetTiltX = 2;
-            else targetTiltX = 0;
+            else if (!sensorsInitialized) targetTiltX = 0; 
 
             if (keys['ArrowUp']) targetTiltY = -2;
             else if (keys['ArrowDown']) targetTiltY = 2;
-            else targetTiltY = 0;
+            else if (!sensorsInitialized) targetTiltY = 0;
         }
 
-        // Collision Check: Ball vs Wall
+        // Mobile Gyroscope / Accelerometer Handling
+        function handleOrientation(e) {
+            if (isGameOver) return;
+            
+            // gamma: left-to-right tilt (-90 to 90), beta: front-to-back tilt (-180 to 180)
+            let x = e.gamma; 
+            let y = e.beta;  
+
+            // Clamp values to prevent extreme acceleration if phone is flipped completely over
+            x = Math.max(-45, Math.min(45, x));
+            y = Math.max(-45, Math.min(45, y));
+
+            // Map tilt directly to target acceleration
+            targetTiltX = x * 0.08;
+            targetTiltY = (y - 45) * 0.08; // Normalizes calculation assuming user holds screen tilted at roughly 45°
+            sensorsInitialized = true;
+        }
+
+        // Explicit permission requested to clear modern iOS/Android browser security checks
+        function initSensors() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        } else {
+                            messageElement.textContent = "Sensor denied. Using Keyboard controls.";
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Android/Standard mobile web compatibility hook
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+        }
+
+        // Collision Check Logic
         function checkWallCollisions(nextX, nextY) {
             let correctedX = nextX;
             let correctedY = nextY;
 
             walls.forEach(w => {
-                // Find closest point on wall to ball center
                 let closestX = Math.max(w.x, Math.min(correctedX + ball.radius, w.x + w.w));
                 let closestY = Math.max(w.y, Math.min(correctedY + ball.radius, w.y + w.h));
 
-                // Distance calculation
                 let distanceX = (correctedX + ball.radius) - closestX;
                 let distanceY = (correctedY + ball.radius) - closestY;
                 let distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
 
                 if (distanceSquared < (ball.radius * ball.radius)) {
-                    // Simple bounce/stop collision logic
                     if (Math.abs(distanceX) > Math.abs(distanceY)) {
-                        ball.vx *= -0.3; // bounce slightly
+                        ball.vx *= -0.3; // Slight bounce
                         correctedX = distanceX > 0 ? closestX : closestX - ball.radius * 2;
                     } else {
                         ball.vy *= -0.3;
@@ -230,7 +260,7 @@
                 }
             });
 
-            // Boundary Collisions
+            // Outer Frame Boundaries
             if (correctedX < 0) { correctedX = 0; ball.vx *= -0.3; }
             if (correctedX > boardSize - ball.radius * 2) { correctedX = boardSize - ball.radius * 2; ball.vx *= -0.3; }
             if (correctedY < 0) { correctedY = 0; ball.vy *= -0.3; }
@@ -239,73 +269,69 @@
             return { x: correctedX, y: correctedY };
         }
 
-        // Game Loop
+        // Physics Processing Loop
         function update() {
             if (isGameOver) return;
 
             handleKeyboardInput();
 
-            // Apply tilt to acceleration
+            // Run forces
             ball.vx += targetTiltX * accelerationFactor;
             ball.vy += targetTiltY * accelerationFactor;
 
-            // Apply friction
             ball.vx *= friction;
             ball.vy *= friction;
 
-            // Tentative next positions
             let nextX = ball.x + ball.vx;
             let nextY = ball.y + ball.vy;
 
-            // Handle wall collisions
             let outcome = checkWallCollisions(nextX, nextY);
             ball.x = outcome.x;
             ball.y = outcome.y;
 
-            // Update Ball Style
+            // Render asset shifts
             ballElement.style.left = ball.x + 'px';
             ballElement.style.top = ball.y + 'px';
 
-            // Visually tilt the board container slightly for 3D effect
+            // Structural 3D tilting illusion
             container.style.transform = `rotateY(${targetTiltX * 4}deg) rotateX(${-targetTiltY * 4}deg)`;
 
-            // Check Holes trigger
             const ballCenterX = ball.x + ball.radius;
             const ballCenterY = ball.y + ball.radius;
 
+            // Hazard Check
             holes.forEach(h => {
                 let dist = Math.hypot(ballCenterX - h.x, ballCenterY - h.y);
-                if (dist < 16) { // inside the hole radius
+                if (dist < 16) {
                     isGameOver = true;
                     messageElement.textContent = "Oops! You fell into a hole! 🕳️";
-                    ballElement.style.transform = "scale(0)"; // fall in animation effect
+                    ballElement.style.transform = "scale(0)";
                     ballElement.style.transition = "transform 0.3s ease";
                 }
             });
 
-            // Check Goal trigger
+            // Objective Check
             let distToGoal = Math.hypot(ballCenterX - (goal.x + goal.radius), ballCenterY - (goal.y + goal.radius));
             if (distToGoal < 15) {
                 isGameOver = true;
-                messageElement.textContent = "You Win! 🎉 Horizon reached!";
+                messageElement.textContent = "You Win! 🎉";
             }
 
             requestAnimationFrame(update);
         }
 
         function resetGame() {
+            initSensors(); 
             ball = { x: 20, y: 20, vx: 0, vy: 0, radius: 10 };
             ballElement.style.transform = "scale(1)";
             ballElement.style.transition = "none";
             isGameOver = false;
-            messageElement.textContent = "Use Arrow Keys to Tilt the Board!";
+            messageElement.textContent = "Tilt your phone or use Arrow Keys!";
             requestAnimationFrame(update);
         }
 
-        // Start everything up
+        // Construct assets immediately
         setupMap();
-        resetGame();
     </script>
 </body>
 </html>
-
