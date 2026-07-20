@@ -25,6 +25,10 @@
     <div class="canvas-container">
         <canvas id="gameCanvas" width="300" height="300"></canvas>
 
+        <div id="countdownOverlay" class="countdown-overlay">
+            <div id="countdownNumber" class="countdown-number">3</div>
+        </div>
+
         <div id="pauseMenu" class="pause-overlay">
             <div class="pause-title">GAME PAUSED</div>
             <button class="menu-btn resume" id="resume-btn">Resume Game</button>
@@ -83,6 +87,8 @@
         const leaderboardMenu = document.getElementById("leaderboardMenu");
         const leaderboardList = document.getElementById("leaderboard-list");
         const gameSettingsMenu = document.getElementById("gameSettingsMenu");
+        const countdownOverlay = document.getElementById("countdownOverlay");
+        const countdownNumber = document.getElementById("countdownNumber");
         const dpadUnit = document.getElementById("dpad-unit");
         const wrapperFrame = document.getElementById("controls-wrapper-frame");
 
@@ -101,6 +107,7 @@
         let score = 0;
         let gameInterval;
         let isPaused = false;
+        let isCountingDown = false; // Prevents inputs and loops during the 3s ticks
 
         let playerBest = parseInt(localStorage.getItem('snake_personal_best')) || 0;
         document.getElementById("high-score").innerText = "Best: " + playerBest;
@@ -193,7 +200,7 @@
         }
 
         function drawGame() {
-            if (isPaused) return; 
+            if (isPaused || isCountingDown) return; 
             updateSnakePosition();
             if (checkGameOver()) { handleGameEnd(); return; }
             checkFoodCollision();
@@ -204,7 +211,7 @@
         }
 
         function clearCanvas() {
-            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--surface-color').trim() || "#000000";
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--surface-color').trim() || "#1e1e1e";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
@@ -252,17 +259,49 @@
             return false;
         }
 
+        // CHANGED: split the pausing mechanism to run the animated countdown routine upon resume
         function togglePause() {
-            isPaused = !isPaused;
-            if (isPaused) {
+            if (isCountingDown) return; // Prevent menu spamming during countdown ticks
+
+            if (!isPaused) {
+                // Pause the game state cleanly
+                isPaused = true;
                 clearTimeout(gameInterval);
                 pauseMenu.style.display = "flex";
             } else {
+                // Trigger the countdown routine when unpausing
                 pauseMenu.style.display = "none";
                 leaderboardMenu.style.display = "none";
                 gameSettingsMenu.style.display = "none";
-                drawGame();
+                startCountdownBeforeResume();
             }
+        }
+
+        // NEW: Handles sequential numeric state updates and matching text bounce scaling animations
+        function startCountdownBeforeResume() {
+            isCountingDown = true;
+            countdownOverlay.style.display = "flex";
+            let timeLeft = 3;
+            
+            function runTick() {
+                if (timeLeft > 0) {
+                    countdownNumber.innerText = timeLeft;
+                    // Reset the CSS keyframe bounce loop animation cleanly every tick
+                    countdownNumber.style.animation = 'none';
+                    countdownNumber.offsetHeight; // Forces element repaint layout update
+                    countdownNumber.style.animation = 'bounceScale 1s ease-in-out infinite';
+                    
+                    timeLeft--;
+                    setTimeout(runTick, 1000);
+                } else {
+                    // Countdown complete, resume full interactive gameplay loops
+                    countdownOverlay.style.display = "none";
+                    isCountingDown = false;
+                    isPaused = false;
+                    drawGame();
+                }
+            }
+            runTick();
         }
 
         function resetGame() {
@@ -272,6 +311,8 @@
             document.getElementById("score").innerText = "Score: " + score;
             generateFood();
             isPaused = false;
+            isCountingDown = false;
+            countdownOverlay.style.display = "none";
             pauseMenu.style.display = "none";
             leaderboardMenu.style.display = "none";
             gameSettingsMenu.style.display = "none";
@@ -279,7 +320,7 @@
         }
 
         function changeDirection(dir) {
-            if (isPaused) return; 
+            if (isPaused || isCountingDown) return; 
             if (dir === 'UP' && dy !== 1) { dx = 0; dy = -1; }
             if (dir === 'DOWN' && dy !== -1) { dx = 0; dy = 1; }
             if (dir === 'LEFT' && dx !== 1) { dx = -1; dy = 0; }
