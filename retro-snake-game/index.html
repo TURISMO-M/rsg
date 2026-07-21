@@ -31,7 +31,7 @@
         .user-badge {
             position: absolute;
             top: 15px;
-            right: 15px;
+            left: 95px;
             font-size: 13px;
             font-weight: bold;
             background-color: var(--surface-color);
@@ -39,48 +39,61 @@
             padding: 8px 12px;
             border-radius: 20px;
             border: 2px solid var(--button-bg);
-            max-width: 180px;
+            max-width: 150px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             z-index: 20;
             display: none;
         }
-
-        .hub-title {
-            font-size: 32px;
-            font-weight: 900;
-            letter-spacing: 3px;
-            color: var(--accent-color);
-            text-shadow: 0 0 12px var(--shadow);
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .hub-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 300px;
-            z-index: 10;
-        }
     </style>
 </head>
 <body class="dark-theme">
 
-    <div class="user-badge" id="user-badge">Guest</div>
+    <a href="../index.html" class="hub-back-nav">⬅ Hub</a>
+    <div id="user-badge" class="user-badge"></div>
 
-    <div class="hub-container">
-        <div class="hub-title">SNAKE ARENA</div>
-        
-        <button class="menu-btn resume" id="play-game-btn">Play Game</button>
-        <button class="menu-btn leaderboard" id="hub-leaderboard-btn">Leaderboard</button>
-        <button class="menu-btn restart" id="hub-settings-btn">Settings</button>
+    <div class="settings-bar">
+        <button id="open-settings-btn" class="icon-btn">⚙️ Settings</button>
+    </div>
+
+    <div class="menu-container">
+        <h1 class="title">SNAKE ARENA</h1>
+        <button class="menu-btn resume" id="play-btn">Play Game</button>
+        <button class="menu-btn leaderboard" id="leaderboard-btn">Leaderboard</button>
+        <button class="menu-btn exit" id="login-btn">Account Login</button>
     </div>
 
     <div class="bottom-ambient-glow"></div>
+
+    <div id="settingsMenu" class="pause-overlay">
+        <div class="pause-title">GLOBAL SETTINGS</div>
+        
+        <div class="setting-row">
+            <label>Theme Option:</label>
+            <button id="hub-theme-toggle" class="icon-btn" style="width:100%; text-align:center;">🌓 Toggle Theme</button>
+        </div>
+
+        <div class="setting-row">
+            <label>Input System Type:</label>
+            <select id="hub-control-type">
+                <option value="dpad">On-Screen D-PAD Box</option>
+                <option value="swipe">Full-Screen Touch Swipe</option>
+            </select>
+        </div>
+
+        <div class="setting-row">
+            <label>Controller Dimensions Scale:</label>
+            <input type="range" id="hub-control-scale" min="0.6" max="1.5" step="0.05" value="1.0">
+        </div>
+
+        <div class="setting-row">
+            <label>Vertical Position Move:</label>
+            <input type="range" id="hub-control-y" min="0" max="150" step="5" value="15">
+        </div>
+
+        <button class="menu-btn resume" id="close-settings-btn">Save Options</button>
+    </div>
 
     <div id="leaderboardMenu" class="pause-overlay">
         <div class="pause-title">GLOBAL RECORDS</div>
@@ -90,39 +103,29 @@
         <button class="menu-btn exit" id="close-leaderboard-btn">Close</button>
     </div>
 
-    <div id="hubSettingsMenu" class="pause-overlay">
-        <div class="pause-title">SETTINGS</div>
-        
-        <div class="setting-row">
-            <label>Control Layout</label>
-            <select id="hub-control-type">
-                <option value="dpad">Tactile D-Pad</option>
-                <option value="swipe">Gesture Swipe</option>
-            </select>
-        </div>
-
-        <div class="setting-row">
-            <label>Control Scale</label>
-            <input type="range" id="hub-control-scale" min="0.7" max="1.4" step="0.1" value="1.0">
-        </div>
-
-        <div class="setting-row">
-            <label>Vertical Position</label>
-            <input type="range" id="hub-control-y" min="0" max="60" step="5" value="15">
-        </div>
-
-        <div class="setting-row" style="margin-top: 10px;">
-            <button class="icon-btn" id="hub-theme-toggle" style="width: 100%;">Toggle Theme 🌓</button>
-        </div>
-
-        <button class="menu-btn resume" id="close-hub-settings-btn" style="margin-top: 15px;">Save & Back</button>
-    </div>
-
     <script>
-        const playBtn = document.getElementById('play-game-btn');
-        const hubSettingsBtn = document.getElementById('hub-settings-btn');
-        const hubSettingsMenu = document.getElementById('hubSettingsMenu');
-        const closeHubSettingsBtn = document.getElementById('close-hub-settings-btn');
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const playBtn = document.getElementById('play-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const openSettingsBtn = document.getElementById('open-settings-btn');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        
         const hubControlType = document.getElementById('hub-control-type');
         const hubControlScale = document.getElementById('hub-control-scale');
         const hubControlY = document.getElementById('hub-control-y');
@@ -144,16 +147,16 @@
             window.location.href = "game.html";
         });
 
-        hubSettingsBtn.addEventListener('click', () => {
+        openSettingsBtn.addEventListener('click', () => {
             loadGlobalSettings();
-            hubSettingsMenu.style.display = "flex";
+            settingsMenu.style.display = "flex";
         });
 
-        closeHubSettingsBtn.addEventListener('click', () => {
+        closeSettingsBtn.addEventListener('click', () => {
             localStorage.setItem('control_type', hubControlType.value);
             localStorage.setItem('control_scale', hubControlScale.value);
             localStorage.setItem('control_y', hubControlY.value);
-            hubSettingsMenu.style.display = "none";
+            settingsMenu.style.display = "none";
         });
 
         hubThemeToggle.addEventListener('click', () => {
@@ -167,15 +170,10 @@
             }
         });
 
-        function showLeaderboard() {
+        document.getElementById('leaderboard-btn').addEventListener('click', () => {
             leaderboardMenu.style.display = "flex";
-            leaderboardList.innerHTML = '<div class="leaderboard-itemLoading">Fetching live records...</div>';
-            setTimeout(() => {
-                leaderboardList.innerHTML = '<div class="leaderboard-item"><span>1. PlayerOne</span><span>120</span></div><div class="leaderboard-item"><span>2. GamerPro</span><span>90</span></div>';
-            }, 600);
-        }
+        });
 
-        document.getElementById('hub-leaderboard-btn').addEventListener('click', showLeaderboard);
         document.getElementById('close-leaderboard-btn').addEventListener('click', () => {
             leaderboardMenu.style.display = "none";
         });
