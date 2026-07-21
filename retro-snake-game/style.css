@@ -6,7 +6,7 @@
     --danger-color: #ff3333;
     --button-bg: #333333;
     --button-text: #ffffff;
-    --shadow: rgba(0, 0, 0, 0.5);
+    --shadow: rgba(0, 255, 0, 0.3);
 }
 
 .light-theme {
@@ -73,9 +73,40 @@ body {
     }
 }
 
-/* =========================================================================
-   CANVAS VIEWPORT LAYOUT & HEADER CONTROLS
-   ========================================================================== */
+.settings-bar {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 20;
+}
+
+.icon-btn {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 2px solid var(--button-bg);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.menu-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    letter-spacing: 2px;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px var(--shadow);
+}
+
 .game-header {
     width: 300px;
     display: flex;
@@ -105,8 +136,6 @@ body {
     position: relative;
     width: 300px;
     height: 300px;
-    box-shadow: 0 8px 24px var(--shadow);
-    border-radius: 4px;
 }
 
 canvas {
@@ -116,7 +145,7 @@ canvas {
 }
 
 /* =========================================================================
-   NEON COUNTDOWN TIMER OVERLAY
+   ANIMATED NEON COUNTDOWN OVERLAY
    ========================================================================== */
 .countdown-overlay {
     position: absolute;
@@ -161,9 +190,6 @@ canvas {
     }
 }
 
-/* =========================================================================
-   MODAL DIALOG & MENUS OVERLAYS
-   ========================================================================== */
 .pause-overlay {
     position: absolute;
     top: 0;
@@ -181,12 +207,11 @@ canvas {
 }
 
 .pause-title {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     margin-bottom: 15px;
     letter-spacing: 2px;
     color: var(--accent-color);
-    text-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
 }
 
 .menu-btn {
@@ -198,7 +223,7 @@ canvas {
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.2s;
+    transition: transform 0.1s;
     text-align: center;
 }
 
@@ -206,30 +231,11 @@ canvas {
     transform: translateY(2px);
 }
 
-.menu-btn.resume { 
-    border: 2px solid #28a745; 
-    color: #28a745; 
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.2);
-}
-.menu-btn.leaderboard { 
-    border: 2px solid #17a2b8; 
-    color: #17a2b8; 
-    box-shadow: 0 0 8px rgba(23, 162, 184, 0.2);
-}
-.menu-btn.restart { 
-    border: 2px solid #ffc107; 
-    color: #ffc107; 
-    box-shadow: 0 0 8px rgba(255, 193, 7, 0.2);
-}
-.menu-btn.exit { 
-    border: 2px solid #dc3545; 
-    color: #dc3545; 
-    box-shadow: 0 0 8px rgba(220, 53, 69, 0.2);
-}
+.menu-btn.resume { border: 2px solid #28a745; color: #28a745; }
+.menu-btn.leaderboard { border: 2px solid #17a2b8; color: #17a2b8; }
+.menu-btn.restart { border: 2px solid #ffc107; color: #ffc107; }
+.menu-btn.exit { border: 2px solid #dc3545; color: #dc3545; }
 
-/* =========================================================================
-   LIVE SCOREBOARD RECORDS VIEW
-   ========================================================================== */
 .leaderboard-list {
     width: 85%;
     max-height: 140px;
@@ -261,19 +267,6 @@ canvas {
     font-size: 13px;
 }
 
-.icon-btn {
-    background: var(--surface-color);
-    color: var(--text-color);
-    border: 1px solid var(--button-bg);
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-/* =========================================================================
-   TACTILE 3D D-PAD CONTROLLER SYSTEM
-   ========================================================================== */
 .controls-wrapper {
     width: 100%;
     display: flex;
@@ -291,10 +284,9 @@ canvas {
 }
 
 .btn {
-    background: linear-gradient(135deg, var(--surface-color) 0%, #252525 100%);
+    background-color: var(--surface-color);
     color: var(--text-color);
-    border: 2px solid var(--accent-color);
-    border-bottom: 5px solid #00aa00;
+    border: 2px solid var(--button-bg);
     border-radius: 14px;
     font-size: 20px;
     position: absolute;
@@ -303,17 +295,7 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), 0 0 6px rgba(0, 255, 0, 0.25);
-    cursor: pointer;
-    transition: all 0.05s ease;
-}
-
-.btn:active {
-    background: var(--accent-color);
-    color: var(--bg-color);
-    border-bottom: 1px solid #00aa00;
-    transform: translateY(4px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 4px rgba(0, 255, 0, 0.4);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 #up-btn    { top: 0; left: 48px; }
